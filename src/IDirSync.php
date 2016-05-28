@@ -18,7 +18,7 @@ interface IDirSync
 	 * constant "__root__"; if the constant is not provided
 	 * then the root is the system root.
 	 * @param string $path A valid path to a existing directory
-	 * @return self
+	 * @return self (fluent interface)
 	 */
 	public function setRootDir( $path );
 
@@ -27,25 +27,25 @@ interface IDirSync
 	 * 
 	 * @param string $filePath A valid json file path
 	 * @throws \DirSync\Exception
-	 * @return self
+	 * @return self (fluent interface)
 	 */
-	public function fromFile( $filePath );
+	//public function fromFile( $filePath );
 
 	/**
 	 * Will provide the library with the JSON input
 	 * 
 	 * @param string $JSON A raw string JSON
 	 * @throws \DirSync\Exception
-	 * @return self
+	 * @return self (fluent interface)
 	 */
-	public function setJsonInput( $JSON );
+	//public function setJsonInput( $JSON );
 
 	/**
 	 * Simply return the previously given JSON data.
 	 * @throws \DirSync\Exception
 	 * @return string Return a string JSON data.
 	 */
-	public function getJsonInput();
+	//public function getJsonInput();
 
 	/**
 	 * Will begin the process of the synchronization. 
@@ -58,8 +58,8 @@ interface IDirSync
 	 * 
 	 * @param mixed [optional] Additional options for the directory sync process
 	 * @throws \DirSync\Exception
-	 * @return self|array
+	 * @return self (fluent interface)|array
 	 */
-	public function sync( $options = null );
+	//public function sync( $options = null );
 
 }

@@ -1,3 +1,4 @@
+src/Util.php
 tests/tmp/*
 vendor/*
 !vendor/others
