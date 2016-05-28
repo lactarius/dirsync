@@ -1,0 +1,11 @@
+tests/tmp/*
+vendor/*
+!vendor/others
+
+nbproject
+.idea
+
+!.gitignore
+!.gitkeep
+!.htaccess
+!web.config
