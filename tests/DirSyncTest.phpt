@@ -28,6 +28,7 @@ class DirSyncTest extends TestCase
 		$this->ds = new DirSync();
 	}
 
+
 	public function tearDown()
 	{
 		if ( $this->path ) {
@@ -35,6 +36,7 @@ class DirSyncTest extends TestCase
 			$this->path = NULL;
 		}
 	}
+
 
 	public function testSetRootDirAbs()
 	{
@@ -46,6 +48,7 @@ class DirSyncTest extends TestCase
 		$this->path = $d;
 	}
 
+
 	public function testSetRootDirAlt1()
 	{
 		$this->ds->setRootDir( '~/testds2' );
@@ -55,6 +58,7 @@ class DirSyncTest extends TestCase
 
 		$this->path = $d;
 	}
+
 
 	public function testSetRootDirAlt2()
 	{
@@ -66,28 +70,33 @@ class DirSyncTest extends TestCase
 		$this->path = $d;
 	}
 
+
 	public function testSetJsonInput()
 	{
 		$j = '{ "__root__": "~/testds1", "src": null }';
 		$this->ds->setJsonInput( $j );
 		$d = $this->ds->getRootDir();
-		$a = $this->ds->getAssocData();
+		$s = $this->ds->getStruct();
 
-		Assert::null( $a[ 'src' ] );
+		Assert::null( $s[ 'src' ][ 0 ] );
 		Assert::same( '/home/pb/testds1', $d );
 
 		$this->path = $d;
 	}
 
+
 	public function testFromFile()
 	{
 		$this->ds->fromFile( '~/virt/dirsync/res/struct.json' );
 		$d = $this->ds->getRootDir();
-		$a = $this->ds->getAssocData();
+		$s = $this->ds->getStruct();
 
-		Assert::false( $a[ 'vendor' ] );
+		Assert::false( $s[ 'vendor' ][ 0 ] );
 		Assert::same( '/home/pb/testds1', $d );
+
+		$this->path = $d;
 	}
+
 
 }
 

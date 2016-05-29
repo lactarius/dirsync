@@ -11,10 +11,18 @@ namespace DirSync;
 class DirSync implements IDirSync
 {
 
+	// system related
 	const SYSTEM_ROOT = '/'; // System root - may vary
 	const ROOT_KEY = '__root__'; // Root index
+	// path related
 	const CHAR_TILDA = '~';
 	const CHAR_DOT = '.';
+	const DIR_DOTS = [ '.', '..' ];
+	// controls
+	const CONTROLS = [ '+', '&', '#' ];
+	const CTRL_WRITEABLE = '+';
+	const CTRL_SYMLINK = '&';
+	const CTRL_COMMAND = '#';
 
 
 	// variables
@@ -25,14 +33,15 @@ class DirSync implements IDirSync
 	/** @var string JSON input */
 	protected $json;
 
-	/** @var array JSON decoded to associated array */
-	protected $assoc;
+	/** @var array JSON decoded and parsed to associated array */
+	protected $struct;
 
 
 	public function __construct()
 	{
 		
 	}
+
 
 	/**
 	 * Root (target) directory getter
@@ -48,6 +57,7 @@ class DirSync implements IDirSync
 		return $this->root;
 	}
 
+
 	/**
 	 * Root (target) directory setter
 	 * 
@@ -56,10 +66,11 @@ class DirSync implements IDirSync
 	 */
 	public function setRootDir( $path )
 	{
-		$this->root = self::checkDir( $path );
+		$this->root = $this->checkDir( $path );
 
 		return $this;
 	}
+
 
 	/**
 	 * Input JSON string getter
@@ -71,6 +82,7 @@ class DirSync implements IDirSync
 		return $this->json;
 	}
 
+
 	/**
 	 * Input JSON string setter
 	 * 
@@ -79,11 +91,12 @@ class DirSync implements IDirSync
 	 */
 	public function setJsonInput( $json )
 	{
-		$this->assoc = self::convertJson( $json );
+		$this->struct = $this->parseInput( $json );
 		$this->json = $json;
 
 		return $this;
 	}
+
 
 	/**
 	 * Reads input json from file
@@ -94,34 +107,126 @@ class DirSync implements IDirSync
 	 */
 	public function fromFile( $filePath )
 	{
-		$path = self::parsePath( $filePath );
+		$path = $this->parsePath( $filePath );
 		if ( !file_exists( $path ) ) {
 			throw new DSException( sprintf( 'File "%s" not found.', $path ) );
 		}
 
 		$json = file_get_contents( $path );
-		$this->assoc = self::convertJson( $json );
+		$this->struct = $this->parseInput( $json );
 		$this->json = $json;
 
 		return $this;
 	}
 
+
 	/**
-	 * Decoded association array getter
+	 * Decoded structure array getter
 	 * 
 	 * @return array
 	 */
-	public function getAssocData()
+	public function getStruct()
 	{
-		return $this->assoc;
+		return $this->struct;
 	}
+
 
 	public function sync( $options = null )
 	{
 		
 	}
 
+
 	// internal routines
+
+	/**
+	 * Analyzes intup JSON
+	 * 
+	 * @param string $json
+	 * @return array
+	 */
+	protected function parseInput( $json )
+	{
+		$assoc = $this->convertJson( $json );
+		return $this->parseAssoc( $assoc );
+	}
+
+
+	/**
+	 * Tries to decode input string
+	 * 
+	 * @param string $json
+	 * @return array
+	 * @throws DSException
+	 */
+	protected function convertJson( $json )
+	{
+		$assoc = json_decode( $json, TRUE );
+		if ( !is_array( $assoc ) ) {
+			throw new DSException( 'The input string contains something completely different than JSON data.' );
+		}
+
+		return $assoc;
+	}
+
+
+	/**
+	 * Analyzes and extracts control characters from
+	 * decoded array
+	 * 
+	 * @param array $assoc
+	 * @return array
+	 */
+	protected function parseAssoc( $assoc )
+	{
+		$struct = [ ];
+		foreach ( $assoc as $key => $value ) {
+
+			$ctrl = substr( $key, 0, 1 );
+			if ( in_array( $ctrl, self::CONTROLS ) ) {
+				$node = substr( $key, 1 );
+			} else {
+				$node = $key;
+				$ctrl = NULL;
+			}
+
+			$struct[ $node ][ 0 ] = is_array( $value ) ? $this->parseAssoc( $value ) : $value;
+			$struct[ $node ][ 1 ] = $ctrl;
+		}
+
+		return $struct;
+	}
+
+
+	protected function processInput( $path, $struct )
+	{
+		$dir = self::scandirExt( $path );
+		$cwd = getcwd();
+		chdir( $path );
+
+		foreach ( $struct as $key => $value ) {
+
+			if ( !in_array( $key, $dir ) ) {
+				
+			}
+		}
+
+
+		chdir( $cwd );
+	}
+
+
+	/**
+	 * Directory listing without the dots ( . .. )
+	 * 
+	 * @param string $path
+	 * @return array
+	 */
+	protected function scandirExt( $path )
+	{
+		return array_diff( scandir( $path ), self::DIR_DOTS );
+	}
+
 
 	/**
 	 * Looks for alternative root places
@@ -130,17 +235,18 @@ class DirSync implements IDirSync
 	 */
 	protected function lookupRoot()
 	{
-		if ( !empty( $this->assoc[ self::ROOT_KEY ] ) ) { // input data contains the root path
-			$path = self::checkDir( $this->assoc[ self::ROOT_KEY ] );
-			unset( $this->assoc[ self::ROOT_KEY ] ); // remove root info from input data
+		if ( !empty( $this->struct[ self::ROOT_KEY ] ) ) { // input data contains the root path
+			$path = $this->checkDir( $this->struct[ self::ROOT_KEY ][ 0 ] );
+			unset( $this->struct[ self::ROOT_KEY ] ); // remove root info from input data
 		} elseif ( defined( self::ROOT_KEY ) ) {  // root is defined somewhere
-			$path = self::checkDir( constant( self::ROOT_KEY ) );
+			$path = $this->checkDir( constant( self::ROOT_KEY ) );
 		} else {
 			$path = self::SYSTEM_ROOT; // Gob be with you
 		}
 
 		return $path;
 	}
+
 
 	/**
 	 * Checks directory existence,
@@ -150,9 +256,9 @@ class DirSync implements IDirSync
 	 * @return string
 	 * @throws DSException
 	 */
-	protected static function checkDir( $path )
+	protected function checkDir( $path )
 	{
-		$path = self::parsePath( $path );
+		$path = $this->parsePath( $path );
 		if ( !is_dir( $path ) && !mkdir( $path ) ) {
 			throw new DSException( sprintf( 'Root directory "%s" doesn\'t exist nor can\'t be created.',
 								   $path ) );
@@ -160,6 +266,7 @@ class DirSync implements IDirSync
 
 		return $path;
 	}
+
 
 	/**
 	 * Analyzes path for shortcuts
@@ -169,7 +276,7 @@ class DirSync implements IDirSync
 	 * @param string $path
 	 * @return string
 	 */
-	protected static function parsePath( $path )
+	protected function parsePath( $path )
 	{
 		// No comments, please... ;-)
 		$path = trim( $path );
@@ -186,21 +293,5 @@ class DirSync implements IDirSync
 		return $prefix ? $prefix . substr( $path, 1 ) : $path;
 	}
 
-	/**
-	 * Tries to decode input string
-	 * 
-	 * @param string $json
-	 * @return array
-	 * @throws DSException
-	 */
-	protected static function convertJson( $json )
-	{
-		$assoc = json_decode( $json, TRUE );
-		if ( !is_array( $assoc ) ) {
-			throw new DSException( 'The input string contains something completely different than JSON data.' );
-		}
-
-		return $assoc;
-	}
 
 }

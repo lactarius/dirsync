@@ -1,5 +1,6 @@
 src/Util.php
 tests/tmp/*
+tests/output
 vendor/*
 !vendor/others
 
