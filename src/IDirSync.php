@@ -23,13 +23,11 @@ interface IDirSync
 	public function setRootDir( $path );
 
 	/**
-	 * Will read the JSON string directly from a file path;
-	 * 
-	 * @param string $filePath A valid json file path
+	 * Simply return the previously given JSON data.
 	 * @throws \DirSync\Exception
-	 * @return self (fluent interface)
+	 * @return string Return a string JSON data.
 	 */
-	//public function fromFile( $filePath );
+	public function getJsonInput();
 
 	/**
 	 * Will provide the library with the JSON input
@@ -38,14 +36,16 @@ interface IDirSync
 	 * @throws \DirSync\Exception
 	 * @return self (fluent interface)
 	 */
-	//public function setJsonInput( $JSON );
+	public function setJsonInput( $json );
 
 	/**
-	 * Simply return the previously given JSON data.
+	 * Will read the JSON string directly from a file path;
+	 * 
+	 * @param string $filePath A valid json file path
 	 * @throws \DirSync\Exception
-	 * @return string Return a string JSON data.
+	 * @return self (fluent interface)
 	 */
-	//public function getJsonInput();
+	public function fromFile( $filePath );
 
 	/**
 	 * Will begin the process of the synchronization. 
@@ -60,6 +60,6 @@ interface IDirSync
 	 * @throws \DirSync\Exception
 	 * @return self (fluent interface)|array
 	 */
-	//public function sync( $options = null );
+	public function sync( $options = null );
 
 }

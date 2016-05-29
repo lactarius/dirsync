@@ -61,6 +61,66 @@ class DirSync implements IDirSync
 		return $this;
 	}
 
+	/**
+	 * Input JSON string getter
+	 * 
+	 * @return string
+	 */
+	public function getJsonInput()
+	{
+		return $this->json;
+	}
+
+	/**
+	 * Input JSON string setter
+	 * 
+	 * @param string $json
+	 * @return self (fluent interface)
+	 */
+	public function setJsonInput( $json )
+	{
+		$this->assoc = self::convertJson( $json );
+		$this->json = $json;
+
+		return $this;
+	}
+
+	/**
+	 * Reads input json from file
+	 * 
+	 * @param string $filePath
+	 * @return self (fluent interface)
+	 * @throws DSException
+	 */
+	public function fromFile( $filePath )
+	{
+		$path = self::parsePath( $filePath );
+		if ( !file_exists( $path ) ) {
+			throw new DSException( sprintf( 'File "%s" not found.', $path ) );
+		}
+
+		$json = file_get_contents( $path );
+		$this->assoc = self::convertJson( $json );
+		$this->json = $json;
+
+		return $this;
+	}
+
+	/**
+	 * Decoded association array getter
+	 * 
+	 * @return array
+	 */
+	public function getAssocData()
+	{
+		return $this->assoc;
+	}
+
+	public function sync( $options = null )
+	{
+		
+	}
+
 	// internal routines
 
 	/**
@@ -72,7 +132,7 @@ class DirSync implements IDirSync
 	{
 		if ( !empty( $this->assoc[ self::ROOT_KEY ] ) ) { // input data contains the root path
 			$path = self::checkDir( $this->assoc[ self::ROOT_KEY ] );
-			unset( $this->assoc[ self::ROOT_KEY ] );
+			unset( $this->assoc[ self::ROOT_KEY ] ); // remove root info from input data
 		} elseif ( defined( self::ROOT_KEY ) ) {  // root is defined somewhere
 			$path = self::checkDir( constant( self::ROOT_KEY ) );
 		} else {
@@ -124,6 +184,23 @@ class DirSync implements IDirSync
 		}
 
 		return $prefix ? $prefix . substr( $path, 1 ) : $path;
+	}
+
+	/**
+	 * Tries to decode input string
+	 * 
+	 * @param string $json
+	 * @return array
+	 * @throws DSException
+	 */
+	protected static function convertJson( $json )
+	{
+		$assoc = json_decode( $json, TRUE );
+		if ( !is_array( $assoc ) ) {
+			throw new DSException( 'The input string contains something completely different than JSON data.' );
+		}
+
+		return $assoc;
 	}
 
 }

@@ -1,0 +1,12 @@
+{
+    "__root__": "~/testds1",
+    "src": null,
+    "tests": {
+        "tmp": null
+    },
+    "vendor": false,
+    "log": {
+        "apache": null,
+        "app": null
+    }
+}
